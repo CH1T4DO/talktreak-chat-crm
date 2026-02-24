@@ -1,123 +1,75 @@
-import { useState } from "react";
-import { apiPost, apiDelete } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Plus, Trash2, Zap } from "lucide-react";
+import { useState } from 'react';
+import { Bot, Play, Pause, Plus, Zap, TrendingUp, GitBranch } from 'lucide-react';
 
-interface Flow {
-  id: string;
-  name: string;
-  trigger: string;
-  response: string;
-  active: boolean;
-  createdAt: string;
-}
-
-const mockFlows: Flow[] = [
-  { id: "1", name: "Boas-vindas", trigger: "/start", response: "Olá! Bem-vindo ao TalkTreak. Como posso ajudar?", active: true, createdAt: "10/01/2026" },
-  { id: "2", name: "Horário de Funcionamento", trigger: "horário", response: "Nosso horário é de segunda a sexta, das 8h às 18h.", active: true, createdAt: "12/01/2026" },
-  { id: "3", name: "Suporte Técnico", trigger: "suporte", response: "Vou transferir você para nosso time de suporte. Aguarde um momento.", active: false, createdAt: "15/01/2026" },
-  { id: "4", name: "Preços", trigger: "preço", response: "Confira nossos planos em talktreak.com/precos", active: true, createdAt: "20/01/2026" },
+const flows = [
+  { id: 1, name: 'Boas-vindas', active: true, triggers: 'Mensagem inicial', completions: 289, nodes: 8, rate: 87 },
+  { id: 2, name: 'Agendamento', active: true, triggers: 'agendar, consulta, marcar', completions: 156, nodes: 12, rate: 74 },
+  { id: 3, name: 'FAQ Preos', active: true, triggers: 'preo, valor, quanto custa', completions: 98, nodes: 6, rate: 91 },
+  { id: 4, name: 'Suporte Ps-Atendimento', active: false, triggers: 'problema, reclamao', completions: 34, nodes: 10, rate: 65 },
+  { id: 5, name: 'Captura de Leads', active: true, triggers: 'informaes, quero saber', completions: 201, nodes: 9, rate: 82 },
 ];
 
 export default function Chatbot() {
-  const [flows, setFlows] = useState<Flow[]>(mockFlows);
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [trigger, setTrigger] = useState("");
-  const [response, setResponse] = useState("");
-
-  const create = async () => {
-    if (!name) return;
-    const newFlow: Flow = {
-      id: Date.now().toString(), name, trigger, response, active: true, createdAt: new Date().toLocaleDateString("pt-BR"),
-    };
-    setFlows(prev => [...prev, newFlow]);
-    setName(""); setTrigger(""); setResponse(""); setOpen(false);
-    try { await apiPost("/api/chatbot/flows", { name, trigger, response }); } catch {}
-  };
-
-  const toggle = (id: string) => {
-    setFlows(prev => prev.map(f => f.id === id ? { ...f, active: !f.active } : f));
-  };
-
-  const remove = (id: string) => {
-    setFlows(prev => prev.filter(f => f.id !== id));
-    apiDelete(`/api/chatbot/flows/${id}`).catch(() => {});
-  };
+  const [flowList, setFlowList] = useState(flows);
+  const toggle = (id: number) => setFlowList(f => f.map(x => x.id === id ? {...x, active: !x.active} : x));
+  const activeCount = flowList.filter(f => f.active).length;
+  const totalCompletions = flowList.reduce((a, f) => a + f.completions, 0);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Chatbot</h1>
-        <Button onClick={() => setOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" /> Novo Fluxo
-        </Button>
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <div><h1 className="text-2xl font-bold text-gray-900">Chatbot</h1><p className="text-sm text-gray-500 mt-1">Gerencie seus fluxos de automao</p></div>
+        <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium"><Plus className="w-4 h-4" /> Novo Fluxo</button>
       </div>
 
-      <Card>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead className="hidden sm:table-cell">Gatilho</TableHead>
-                <TableHead className="hidden md:table-cell">Resposta</TableHead>
-                <TableHead>Ativo</TableHead>
-                <TableHead className="hidden sm:table-cell">Data</TableHead>
-                <TableHead className="w-20" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {flows.map((f) => (
-                <TableRow key={f.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Zap className="h-3.5 w-3.5 text-primary" />
-                      <span className="font-medium text-sm">{f.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">
-                    <Badge variant="outline" className="text-[10px] font-mono">{f.trigger}</Badge>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell text-sm text-muted-foreground max-w-[200px] truncate">{f.response}</TableCell>
-                  <TableCell>
-                    <Switch checked={f.active} onCheckedChange={() => toggle(f.id)} />
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">{f.createdAt}</TableCell>
-                  <TableCell>
-                    <Button size="icon" variant="ghost" onClick={() => remove(f.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </Card>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Novo Fluxo</DialogTitle>
-            <DialogDescription>Configure o fluxo do chatbot.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <Input placeholder="Nome do fluxo" value={name} onChange={(e) => setName(e.target.value)} />
-            <Input placeholder="Palavra-gatilho" value={trigger} onChange={(e) => setTrigger(e.target.value)} />
-            <Input placeholder="Resposta automática" value={response} onChange={(e) => setResponse(e.target.value)} />
+      <div className="grid grid-cols-3 gap-4">
+        {[['Fluxos Ativos', activeCount, 'text-green-600'],['Disparos Hoje', totalCompletions, 'text-blue-600'],['Taxa Concluso', '83%', 'text-purple-600']].map(([l,v,cls])=>(
+          <div key={String(l)} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div className={`text-2xl font-bold ${cls}`}>{String(v)}</div>
+            <div className="text-sm text-gray-500">{String(l)}</div>
           </div>
-          <DialogFooter>
-            <Button onClick={create}>Criar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        ))}
+      </div>
+
+      <div className="grid gap-4">
+        {flowList.map(f => (
+          <div key={f.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${f.active ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                  <Bot className={`w-5 h-5 ${f.active ? 'text-blue-600' : 'text-gray-400'}`} />
+                </div>
+                <div>
+                  <div className="font-medium text-gray-900">{f.name}</div>
+                  <div className="text-xs text-gray-400 flex items-center gap-1"><Zap className="w-3 h-3" />{f.triggers}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="text-center hidden md:block"><div className="text-sm font-bold text-gray-900">{f.completions}</div><div className="text-xs text-gray-400">Disparos</div></div>
+                <div className="text-center hidden md:block"><div className="text-sm font-bold text-gray-900">{f.nodes}</div><div className="text-xs text-gray-400">Ns</div></div>
+                <button onClick={() => toggle(f.id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${f.active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                  {f.active ? <><Play className="w-3 h-3" /> Ativo</> : <><Pause className="w-3 h-3" /> Inativo</>}
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+                <div className="bg-blue-500 h-1.5 rounded-full" style={{width: `${f.rate}%`}}></div>
+              </div>
+              <span className="text-xs text-gray-500">{f.rate}% concluso</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
+        <div className="flex items-center gap-3 mb-2">
+          <GitBranch className="w-6 h-6" />
+          <h3 className="font-semibold text-lg">Flow Builder Visual</h3>
+        </div>
+        <p className="text-blue-100 text-sm mb-4">Crie fluxos complexos arrastando e soltando elementos no editor visual.</p>
+        <button className="bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-50">Abrir Editor Visual</button>
+      </div>
     </div>
   );
 }

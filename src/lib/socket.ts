@@ -1,26 +1,20 @@
-import { io, Socket } from "socket.io-client";
+import { io, Socket } from 'socket.io-client';
+
+const SOCKET_URL = import.meta.env.VITE_API_URL || "http://76.13.236.210:3001";
 
 let socket: Socket | null = null;
 
-export function getSocket(): Socket {
+export const getSocket = (): Socket => {
   if (!socket) {
-    const token = localStorage.getItem("tt_token");
-    socket = io(window.location.origin, {
-      auth: { token },
-      autoConnect: false,
+    socket = io(SOCKET_URL, {
+      auth: { token: localStorage.getItem('token') },
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
     });
   }
   return socket;
-}
+};
 
-export function connectSocket(): void {
-  const s = getSocket();
-  if (!s.connected) s.connect();
-}
-
-export function disconnectSocket(): void {
-  if (socket) {
-    socket.disconnect();
-    socket = null;
-  }
-}
+export const disconnectSocket = () => {
+  if (socket) { socket.disconnect(); socket = null; }
+};

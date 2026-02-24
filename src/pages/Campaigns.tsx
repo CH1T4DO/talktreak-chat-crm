@@ -1,125 +1,75 @@
-import { useState } from "react";
-import { apiPost, apiDelete } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Plus, Trash2, Users, Send } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useState } from 'react';
+import { Send, Pause, Play, Plus, Users, CheckCircle, Eye, MessageSquare } from 'lucide-react';
 
-interface Campaign {
-  id: string;
-  name: string;
-  status: "active" | "inactive" | "scheduled" | "completed";
-  recipients: number;
-  sent: number;
-  createdAt: string;
-}
-
-const mockCampaigns: Campaign[] = [
-  { id: "1", name: "Promoção de Verão", status: "active", recipients: 1200, sent: 890, createdAt: "20/02/2026" },
-  { id: "2", name: "Boas-vindas Novos Clientes", status: "active", recipients: 350, sent: 350, createdAt: "15/02/2026" },
-  { id: "3", name: "Reengajamento Q1", status: "scheduled", recipients: 2500, sent: 0, createdAt: "22/02/2026" },
-  { id: "4", name: "Black Friday 2025", status: "completed", recipients: 5000, sent: 4850, createdAt: "25/11/2025" },
-  { id: "5", name: "Newsletter Fevereiro", status: "inactive", recipients: 3200, sent: 0, createdAt: "01/02/2026" },
+const campaigns = [
+  { id: 1, name: 'Promoo Janeiro', status: 'concluida', sent: 1200, delivered: 1178, read: 856, responses: 124, date: '15/01/2026' },
+  { id: 2, name: 'Reativao Clientes', status: 'ativa', sent: 800, delivered: 792, read: 543, responses: 89, date: '20/01/2026' },
+  { id: 3, name: 'Lembrete Consultas', status: 'ativa', sent: 450, delivered: 448, read: 398, responses: 67, date: '22/01/2026' },
+  { id: 4, name: 'Newsletter Fevereiro', status: 'agendada', sent: 0, delivered: 0, read: 0, responses: 0, date: '01/02/2026' },
+  { id: 5, name: 'Oferta Especial VIP', status: 'pausada', sent: 320, delivered: 315, read: 210, responses: 45, date: '10/01/2026' },
 ];
 
-const statusConfig: Record<string, { label: string; class: string }> = {
-  active: { label: "Ativa", class: "bg-green-500/20 text-green-400 border-green-500/30" },
-  inactive: { label: "Inativa", class: "bg-muted text-muted-foreground" },
-  scheduled: { label: "Agendada", class: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
-  completed: { label: "Concluída", class: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
+const statusStyle: Record<string, string> = {
+  ativa: 'bg-green-100 text-green-700',
+  pausada: 'bg-yellow-100 text-yellow-700',
+  concluida: 'bg-gray-100 text-gray-600',
+  agendada: 'bg-blue-100 text-blue-700',
+  rascunho: 'bg-orange-100 text-orange-700',
 };
 
 export default function Campaigns() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>(mockCampaigns);
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [message, setMessage] = useState("");
-
-  const create = async () => {
-    if (!name) return;
-    const newCampaign: Campaign = {
-      id: Date.now().toString(), name, status: "inactive", recipients: 0, sent: 0, createdAt: new Date().toLocaleDateString("pt-BR"),
-    };
-    setCampaigns(prev => [...prev, newCampaign]);
-    setName(""); setMessage(""); setOpen(false);
-    try { await apiPost("/api/campaigns", { name, message }); } catch {}
-  };
-
-  const remove = (id: string) => {
-    setCampaigns(prev => prev.filter(c => c.id !== id));
-    apiDelete(`/api/campaigns/${id}`).catch(() => {});
-  };
+  const [filter, setFilter] = useState('todas');
+  const filtered = filter === 'todas' ? campaigns : campaigns.filter(c => c.status === filter);
+  const total = campaigns.reduce((a, c) => a + c.sent, 0);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Campanhas</h1>
-        <Button onClick={() => setOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" /> Nova Campanha
-        </Button>
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <div><h1 className="text-2xl font-bold text-gray-900">Campanhas</h1><p className="text-sm text-gray-500 mt-1">Gerencie seus disparos em massa</p></div>
+        <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium"><Plus className="w-4 h-4" /> Nova Campanha</button>
       </div>
 
-      <Card>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="hidden sm:table-cell">Destinatários</TableHead>
-                <TableHead className="hidden sm:table-cell">Enviados</TableHead>
-                <TableHead className="hidden md:table-cell">Data</TableHead>
-                <TableHead className="w-20" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {campaigns.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell className="font-medium text-sm">{c.name}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={cn("text-[10px]", statusConfig[c.status].class)}>
-                      {statusConfig[c.status].label}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell text-sm">
-                    <span className="flex items-center gap-1 text-muted-foreground"><Users className="h-3 w-3" /> {c.recipients.toLocaleString()}</span>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell text-sm">
-                    <span className="flex items-center gap-1 text-muted-foreground"><Send className="h-3 w-3" /> {c.sent.toLocaleString()}</span>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{c.createdAt}</TableCell>
-                  <TableCell>
-                    <Button size="icon" variant="ghost" onClick={() => remove(c.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </Card>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Nova Campanha</DialogTitle>
-            <DialogDescription>Defina o nome e a mensagem da campanha.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <Input placeholder="Nome da campanha" value={name} onChange={(e) => setName(e.target.value)} />
-            <Textarea placeholder="Mensagem" value={message} onChange={(e) => setMessage(e.target.value)} />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[['Total Enviadas', total.toLocaleString(), 'text-blue-600'],['Taxa Entrega','98.2%','text-green-600'],['Taxa Leitura','68.4%','text-purple-600'],['Respostas','490','text-orange-600']].map(([l,v,cls])=>(
+          <div key={String(l)} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div className={`text-2xl font-bold ${cls}`}>{String(v)}</div>
+            <div className="text-sm text-gray-500">{String(l)}</div>
           </div>
-          <DialogFooter>
-            <Button onClick={create}>Criar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div className="p-4 border-b border-gray-100">
+          <div className="flex gap-2 flex-wrap">
+            {['todas','ativa','agendada','pausada','concluida'].map(f=>(
+              <button key={f} onClick={()=>setFilter(f)} className={`px-3 py-1.5 text-xs rounded-lg font-medium capitalize transition-colors ${filter===f ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{f}</button>
+            ))}
+          </div>
+        </div>
+        <div className="divide-y divide-gray-50">
+          {filtered.map(c=>(
+            <div key={c.id} className="p-4 flex items-center gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-medium text-gray-900 text-sm">{c.name}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusStyle[c.status]}`}>{c.status}</span>
+                </div>
+                <div className="text-xs text-gray-400">{c.date}</div>
+              </div>
+              <div className="hidden md:flex items-center gap-6 text-center">
+                {[['Enviadas',c.sent,'text-blue-600'],['Entregues',c.delivered,'text-green-600'],['Lidas',c.read,'text-purple-600'],['Respostas',c.responses,'text-orange-600']].map(([l,v,cls])=>(
+                  <div key={String(l)}><div className={`text-sm font-bold ${cls}`}>{String(v)}</div><div className="text-xs text-gray-400">{String(l)}</div></div>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                {c.status === 'ativa' && <button className="p-1.5 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200"><Pause className="w-4 h-4" /></button>}
+                {c.status === 'pausada' && <button className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200"><Play className="w-4 h-4" /></button>}
+                {c.status === 'agendada' && <button className="p-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"><Send className="w-4 h-4" /></button>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

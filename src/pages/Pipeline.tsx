@@ -1,116 +1,67 @@
-import { useState, useRef } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
+import { useState } from 'react';
+import { Plus, DollarSign, User, Clock } from 'lucide-react';
 
-interface PipelineCard {
-  id: string;
-  name: string;
-  phone: string;
-  value?: string;
-  tags?: string[];
-}
-
-type Column = "novo" | "contato" | "proposta" | "fechado" | "perdido";
-
-const COLUMNS: { key: Column; label: string; color: string }[] = [
-  { key: "novo", label: "Novo Lead", color: "bg-blue-500" },
-  { key: "contato", label: "Em Contato", color: "bg-yellow-500" },
-  { key: "proposta", label: "Proposta", color: "bg-purple-500" },
-  { key: "fechado", label: "Fechado", color: "bg-green-500" },
-  { key: "perdido", label: "Perdido", color: "bg-red-500" },
-];
-
-const INITIAL: Record<Column, PipelineCard[]> = {
-  novo: [
-    { id: "1", name: "João Silva", phone: "+55 11 99999-0001", value: "R$ 2.500", tags: ["WhatsApp"] },
-    { id: "2", name: "Maria Souza", phone: "+55 11 99999-0002", value: "R$ 1.800", tags: ["Instagram"] },
-    { id: "8", name: "Larissa Ferreira", phone: "+55 11 99999-0008", value: "R$ 3.200" },
+const cols = ['Novo Lead','Qualificado','Proposta','Negociao','Fechado'];
+const initialCards: Record<string, any[]> = {
+  'Novo Lead': [
+    { id:1, company:'Clnica So Lucas', value:'R$ 2.500', agent:'Ana', time:'2h' },
+    { id:2, company:'Studio Beleza+', value:'R$ 1.800', agent:'Joo', time:'5h' },
+    { id:3, company:'Spa Renovar', value:'R$ 4.200', agent:'Maria', time:'1d' },
   ],
-  contato: [
-    { id: "3", name: "Carlos Lima", phone: "+55 11 99999-0003", value: "R$ 5.000", tags: ["VIP"] },
-    { id: "9", name: "Bruno Mendes", phone: "+55 11 99999-0009", value: "R$ 900" },
+  'Qualificado': [
+    { id:4, company:'Instituto Esttica Pro', value:'R$ 6.500', agent:'Pedro', time:'1d' },
+    { id:5, company:'Clnica Bem Estar', value:'R$ 3.100', agent:'Ana', time:'2d' },
   ],
-  proposta: [
-    { id: "4", name: "Ana Oliveira", phone: "+55 11 99999-0004", value: "R$ 12.000", tags: ["Enterprise"] },
+  'Proposta': [
+    { id:6, company:'Centro Mdico Vida', value:'R$ 8.900', agent:'Joo', time:'3d' },
+    { id:7, company:'Clnica Harmonia', value:'R$ 5.400', agent:'Maria', time:'3d' },
   ],
-  fechado: [
-    { id: "5", name: "Pedro Costa", phone: "+55 11 99999-0005", value: "R$ 8.500", tags: ["VIP"] },
-    { id: "6", name: "Fernanda Lima", phone: "+55 11 99999-0006", value: "R$ 3.000" },
+  'Negociao': [
+    { id:8, company:'Spa Premium RN', value:'R$ 12.000', agent:'Pedro', time:'5d' },
+    { id:9, company:'Esttica Total', value:'R$ 7.800', agent:'Ana', time:'6d' },
   ],
-  perdido: [
-    { id: "7", name: "Ricardo Alves", phone: "+55 11 99999-0007", value: "R$ 1.200" },
+  'Fechado': [
+    { id:10, company:'Clnica Dapaz', value:'R$ 15.000', agent:'Joo', time:'7d' },
+    { id:11, company:'Beauty Center', value:'R$ 9.200', agent:'Maria', time:'10d' },
+    { id:12, company:'Instituto Alpha', value:'R$ 11.500', agent:'Pedro', time:'12d' },
   ],
 };
 
+const colColors: Record<string, string> = {
+  'Novo Lead':'border-t-blue-400','Qualificado':'border-t-yellow-400','Proposta':'border-t-orange-400','Negociao':'border-t-purple-400','Fechado':'border-t-green-400'
+};
+
 export default function Pipeline() {
-  const [columns, setColumns] = useState<Record<Column, PipelineCard[]>>(INITIAL);
-  const dragItem = useRef<{ col: Column; id: string } | null>(null);
-  const [dragOver, setDragOver] = useState<Column | null>(null);
-
-  const handleDragStart = (col: Column, id: string) => {
-    dragItem.current = { col, id };
-  };
-
-  const handleDrop = (targetCol: Column) => {
-    if (!dragItem.current) return;
-    const { col: srcCol, id } = dragItem.current;
-    if (srcCol === targetCol) { dragItem.current = null; setDragOver(null); return; }
-    setColumns((prev) => {
-      const card = prev[srcCol].find((c) => c.id === id);
-      if (!card) return prev;
-      return { ...prev, [srcCol]: prev[srcCol].filter((c) => c.id !== id), [targetCol]: [...prev[targetCol], card] };
-    });
-    dragItem.current = null;
-    setDragOver(null);
-  };
-
+  const [cards] = useState(initialCards);
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Pipeline</h1>
-      <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory touch-pan-x">
-        {COLUMNS.map(({ key, label, color }) => (
-          <div
-            key={key}
-            className={cn(
-              "flex w-60 shrink-0 flex-col rounded-lg border border-border bg-card snap-start",
-              dragOver === key && "ring-2 ring-primary"
-            )}
-            onDragOver={(e) => { e.preventDefault(); setDragOver(key); }}
-            onDragLeave={() => setDragOver(null)}
-            onDrop={() => handleDrop(key)}
-          >
-            <div className={cn("flex items-center justify-between px-3 py-2 rounded-t-lg", color)}>
-              <h3 className="text-sm font-semibold text-white">{label}</h3>
-              <Badge className="bg-white/20 text-white border-0 text-[10px]">{columns[key].length}</Badge>
-            </div>
-            <div className="flex flex-col gap-2 p-3 min-h-[80px]">
-              {columns[key].map((card) => (
-                <Card key={card.id} draggable onDragStart={() => handleDragStart(key, card.id)} className="cursor-grab active:cursor-grabbing">
-                  <CardContent className="p-3 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-7 w-7">
-                        <AvatarFallback className="text-[10px] bg-primary/20 text-primary">
-                          {card.name.split(" ").map(n => n[0]).join("").substring(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{card.name}</p>
-                        <p className="text-[10px] text-muted-foreground">{card.phone}</p>
-                      </div>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <div><h1 className="text-2xl font-bold text-gray-900">Pipeline</h1><p className="text-sm text-gray-500 mt-1">Acompanhe seus negcios em andamento</p></div>
+        <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium"><Plus className="w-4 h-4" />Novo Negcio</button>
+      </div>
+      <div className="flex gap-4 overflow-x-auto pb-4">
+        {cols.map(col => (
+          <div key={col} className="flex-shrink-0 w-64">
+            <div className={`bg-white rounded-xl shadow-sm border border-gray-100 border-t-4 ${colColors[col]}`}>
+              <div className="p-3 border-b border-gray-100 flex justify-between items-center">
+                <span className="font-medium text-sm text-gray-900">{col}</span>
+                <span className="w-5 h-5 bg-gray-100 text-gray-600 text-xs rounded-full flex items-center justify-center font-bold">{cards[col]?.length || 0}</span>
+              </div>
+              <div className="p-2 space-y-2 min-h-32">
+                {(cards[col] || []).map(card => (
+                  <div key={card.id} className="bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-gray-100 border border-gray-100">
+                    <div className="font-medium text-xs text-gray-900 mb-2">{card.company}</div>
+                    <div className="flex items-center justify-between text-xs text-gray-400">
+                      <span className="flex items-center gap-1"><DollarSign className="w-3 h-3 text-green-500" />{card.value}</span>
+                      <span className="flex items-center gap-1"><User className="w-3 h-3" />{card.agent}</span>
                     </div>
-                    {card.value && <p className="text-xs font-semibold text-primary">{card.value}</p>}
-                    {card.tags && card.tags.length > 0 && (
-                      <div className="flex gap-1">
-                        {card.tags.map(tag => (
-                          <Badge key={tag} variant="outline" className="text-[9px] px-1.5">{tag}</Badge>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+                    <div className="flex items-center gap-1 text-xs text-gray-300 mt-1"><Clock className="w-3 h-3" />{card.time}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="p-2">
+                <button className="w-full flex items-center justify-center gap-1 py-1.5 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg"><Plus className="w-3 h-3" />Adicionar</button>
+              </div>
             </div>
           </div>
         ))}

@@ -1,170 +1,94 @@
-import { motion } from "framer-motion";
-import {
-  MessageSquare, Phone, PhoneIncoming, Clock, Users, UserPlus, UserCheck,
-  Headphones, Info, BarChart3,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
-} from "recharts";
-import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Users, MessageSquare, CheckCircle, Clock, Bot, TrendingUp } from 'lucide-react';
 
-const row1 = [
-  { label: "Atendimentos", value: 152, icon: MessageSquare, color: "hsl(0, 72%, 51%)" },
-  { label: "Receptivos", value: 98, icon: PhoneIncoming, color: "hsl(142, 71%, 45%)" },
-  { label: "Ativos", value: 34, icon: Phone, color: "hsl(210, 80%, 55%)" },
-  { label: "Pendentes", value: 20, icon: Clock, color: "hsl(45, 90%, 50%)" },
+const stats = [
+  { label: 'Conversas Hoje', value: '127', icon: MessageSquare, color: 'text-blue-500', bg: 'bg-blue-50' },
+  { label: 'Atendimentos Abertos', value: '34', icon: Clock, color: 'text-yellow-500', bg: 'bg-yellow-50' },
+  { label: 'Resolvidos', value: '93', icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-50' },
+  { label: 'Total Contatos', value: '1.842', icon: Users, color: 'text-purple-500', bg: 'bg-purple-50' },
+  { label: 'Tempo Mdio', value: '4:32', icon: TrendingUp, color: 'text-pink-500', bg: 'bg-pink-50' },
+  { label: 'Chatbot Hoje', value: '289', icon: Bot, color: 'text-indigo-500', bg: 'bg-indigo-50' },
 ];
 
-const row2 = [
-  { label: "Atendentes", value: 12, icon: Headphones, color: "hsl(270, 70%, 60%)" },
-  { label: "Total contatos", value: 3482, icon: Users, color: "hsl(190, 80%, 50%)" },
-  { label: "Novos contatos", value: 47, icon: UserPlus, color: "hsl(24, 95%, 53%)" },
-  { label: "Contatos ativos", value: 289, icon: UserCheck, color: "hsl(340, 70%, 55%)" },
+const conversations = [
+  { id: 1, name: 'Maria Silva', msg: 'Ol, gostaria de agendar uma consulta', time: '2min', status: 'aberto', avatar: 'MS' },
+  { id: 2, name: 'Joo Santos', msg: 'Qual o valor do procedimento?', time: '5min', status: 'aberto', avatar: 'JS' },
+  { id: 3, name: 'Ana Costa', msg: 'Obrigada pelo atendimento!', time: '12min', status: 'resolvido', avatar: 'AC' },
+  { id: 4, name: 'Pedro Lima', msg: 'Preciso remarcar minha consulta', time: '18min', status: 'aberto', avatar: 'PL' },
+  { id: 5, name: 'Carla Souza', msg: 'Vocs aceitam plano de sade?', time: '25min', status: 'bot', avatar: 'CS' },
 ];
 
-const row3 = [
-  { label: "TMA", value: "04:32", icon: Clock, color: "hsl(160, 60%, 45%)" },
-  { label: "1ª resposta", value: "00:45", icon: MessageSquare, color: "hsl(200, 70%, 50%)" },
+const channels = [
+  { name: 'WhatsApp Principal', status: 'online', msgs: 89 },
+  { name: 'WhatsApp Suporte', status: 'online', msgs: 34 },
+  { name: 'Chatbot IA', status: 'online', msgs: 289 },
+  { name: 'Campanhas', status: 'online', msgs: 12 },
 ];
-
-const barData = [
-  { dia: "Seg", atendimentos: 32 },
-  { dia: "Ter", atendimentos: 48 },
-  { dia: "Qua", atendimentos: 39 },
-  { dia: "Qui", atendimentos: 52 },
-  { dia: "Sex", atendimentos: 61 },
-  { dia: "Sáb", atendimentos: 28 },
-  { dia: "Dom", atendimentos: 19 },
-];
-
-const closingReasons = [
-  { name: "Resolvido", value: 45, color: "hsl(142, 71%, 45%)" },
-  { name: "Sem resposta", value: 20, color: "hsl(45, 90%, 50%)" },
-  { name: "Transferido", value: 15, color: "hsl(210, 80%, 55%)" },
-  { name: "Spam", value: 10, color: "hsl(0, 72%, 51%)" },
-  { name: "Outros", value: 10, color: "hsl(270, 70%, 60%)" },
-];
-
-const departmentData = [
-  { name: "Suporte", value: 40, color: "hsl(210, 80%, 55%)" },
-  { name: "Vendas", value: 30, color: "hsl(142, 71%, 45%)" },
-  { name: "Financeiro", value: 15, color: "hsl(45, 90%, 50%)" },
-  { name: "Técnico", value: 15, color: "hsl(270, 70%, 60%)" },
-];
-
-const container = { hidden: {}, show: { transition: { staggerChildren: 0.05 } } };
-const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
-
-function MetricCard({ label, value, icon: Icon, color }: { label: string; value: string | number; icon: any; color: string }) {
-  return (
-    <motion.div variants={item}>
-      <Card className="hover:shadow-md transition-shadow relative overflow-hidden">
-        <CardContent className="p-5">
-          <div className="absolute top-3 right-3">
-            <Icon className="h-10 w-10 opacity-80" style={{ color }} />
-          </div>
-          <p className="text-3xl font-bold text-foreground mt-2">{typeof value === "number" ? value.toLocaleString("pt-BR") : value}</p>
-          <div className="flex items-center gap-1.5 mt-2">
-            <span className="text-xs text-muted-foreground">{label}</span>
-            <UITooltip>
-              <TooltipTrigger asChild>
-                <Info className="h-3 w-3 text-muted-foreground cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent>{label} no período selecionado</TooltipContent>
-            </UITooltip>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-}
 
 export default function Dashboard() {
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
-
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">{greeting}, Administrador 👋</h1>
-        <p className="text-muted-foreground text-sm">Aqui está o resumo do seu dia</p>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-gray-500 text-sm mt-1">Viso geral do seu atendimento</p>
       </div>
 
-      {/* Row 1 - 4 cards */}
-      <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {row1.map((m) => <MetricCard key={m.label} {...m} />)}
-      </motion.div>
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+        {stats.map((s) => (
+          <div key={s.label} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div className={`w-10 h-10 rounded-lg ${s.bg} flex items-center justify-center mb-3`}>
+              <s.icon className={`w-5 h-5 ${s.color}`} />
+            </div>
+            <div className="text-2xl font-bold text-gray-900">{s.value}</div>
+            <div className="text-xs text-gray-500 mt-1">{s.label}</div>
+          </div>
+        ))}
+      </div>
 
-      {/* Row 2 - 4 cards */}
-      <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {row2.map((m) => <MetricCard key={m.label} {...m} />)}
-      </motion.div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100">
+          <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+            <h2 className="font-semibold text-gray-900">Conversas Recentes</h2>
+            <button className="text-sm text-blue-600 hover:underline">Ver todas</button>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {conversations.map((c) => (
+              <div key={c.id} className="p-4 flex items-center gap-3 hover:bg-gray-50 cursor-pointer">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                  {c.avatar}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-sm text-gray-900">{c.name}</span>
+                    <span className="text-xs text-gray-400">{c.time}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 truncate">{c.msg}</p>
+                </div>
+                <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                  c.status === 'aberto' ? 'bg-yellow-100 text-yellow-700' :
+                  c.status === 'resolvido' ? 'bg-green-100 text-green-700' :
+                  'bg-blue-100 text-blue-700'
+                }`}>{c.status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
-      {/* Row 3 - 2 cards */}
-      <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-2 gap-4">
-        {row3.map((m) => <MetricCard key={m.label} {...m} />)}
-      </motion.div>
-
-      {/* Row 4 - Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-primary" /> Atendimentos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={barData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="dia" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
-                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, color: "hsl(var(--foreground))" }} />
-                <Bar dataKey="atendimentos" fill="hsl(210, 80%, 55%)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Motivo de fechamento</CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-center justify-center">
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie data={closingReasons} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
-                  {closingReasons.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, color: "hsl(var(--foreground))" }} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Atendimento por departamento</CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-center justify-center">
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie data={departmentData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
-                  {departmentData.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, color: "hsl(var(--foreground))" }} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <div className="p-4 border-b border-gray-100">
+            <h2 className="font-semibold text-gray-900">Status dos Canais</h2>
+          </div>
+          <div className="p-4 space-y-3">
+            {channels.map((ch) => (
+              <div key={ch.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <span className="text-sm text-gray-700">{ch.name}</span>
+                </div>
+                <span className="text-xs font-medium text-gray-500">{ch.msgs} msgs</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
