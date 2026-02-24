@@ -29,3 +29,7 @@ export const api = {
 };
 
 export default api;
+export const apiPost = api.post;
+export const apiGet = api.get;
+export const apiPut = api.put;
+export const apiDelete = api.delete;

@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
-import { connectSocket, disconnectSocket } from "@/lib/socket";
+import React, { createContext, useContext, useState, useCallback } from "react";
 
 interface AuthContextType {
   token: string | null;
@@ -20,13 +19,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem("tt_token");
-    disconnectSocket();
     setToken(null);
   }, []);
-
-  useEffect(() => {
-    if (token) connectSocket();
-  }, [token]);
 
   return (
     <AuthContext.Provider value={{ token, login, logout, isAuthenticated: !!token }}>
@@ -35,8 +29,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 }
+
+export default AuthContext;
