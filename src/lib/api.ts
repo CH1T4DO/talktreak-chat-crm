@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL || "http://76.13.236.210:3001";
+const BASE_URL = import.meta.env.VITE_API_URL || "https://api.talktreak.com.br";
 
 function getToken(): string | null {
   return localStorage.getItem("tt_token");

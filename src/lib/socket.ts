@@ -1,6 +1,6 @@
 import { io, Socket } from "socket.io-client";
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || "http://76.13.236.210:3001";
+const SOCKET_URL = import.meta.env.VITE_API_URL || "https://api.talktreak.com.br";
 
 let socket: Socket | null = null;
 
